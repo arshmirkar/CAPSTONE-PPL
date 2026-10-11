@@ -7,7 +7,7 @@
 # 2--Handle Outliers
 ->Identify: The 75th percentile for max prices is ₹4,880, but the maximum value in the dataset spikes to ₹90,000.
 
-->Action & Justification: You need to detect these extreme values. Calculate the Interquartile Range (IQR) or use Z-scores to isolate them. In your report or code comments, justify whether you are keeping them (e.g., classifying them as luxury/high-value commodities that genuinely cost that much) or capping/removing them (if they are data entry errors).
+->Action & Justification: You need to detect these extreme values. Calculate the Interquartile Range (IQR) to isolate them. In your report or code comments, justify whether you are keeping them (e.g., classifying them as luxury/high-value commodities that genuinely cost that much) or capping/removing them (if they are data entry errors).
 
 # 3--Handle Invalid and Missing Data
 ->Address Zeroes: While the dataset does not contain standard NaN values, there are exactly 9 rows where both the Minimum and Maximum prices are 0. A commodity price of 0 is invalid.(685)
