@@ -1,21 +1,14 @@
 """
 Agricultural Market Price Volatility & Commodity Spread Analysis
 ================================================================
-Capstone Project: Analytical Visualizations & Econometric Modeling
+Capstone Project: Core Analytical Visualizations & Econometric Modeling
 
-This script generates all 12 key analytical plots for the capstone project:
+This script generates the 5 Core Analytical Graphs for the capstone project:
 1. Kernel Density Estimation (KDE) Price Distribution Shapes (Matplotlib/Seaborn)
-2. Dual-Axis Price Trend vs. Volatility Spread % (Matplotlib)
-3. State-wise Commodity Pricing Pivot Heatmap (Pandas/Seaborn)
-4. Regional Price Spread Distribution Boxplots (Seaborn)
-5. Top Volatile Agricultural Commodities Ranking (Matplotlib/Seaborn)
-6. Quantile-Quantile (Q-Q) Normality & Heavy Tail Plots (SciPy/Statsmodels)
-7. Price Discovery & Predictability OLS Regression (Statsmodels)
-8. Hypothesis Testing: ANOVA & Levene's Test for Variance Parity (SciPy)
-9. Seasonal Time-Series Decomposition (Statsmodels STL/Seasonal)
-10. Volatility Clustering & Autocorrelation of Price Shocks (Statsmodels)
-11. Quality Grade & Variety Price Realization (Seaborn)
-12. Market Stability Metric Correlation Matrix (Seaborn)
+2. State-wise Commodity Pricing Pivot Table Heatmap (Pandas/Seaborn)
+3. Top Volatile Agricultural Commodities Ranking by Spread % (Matplotlib/Seaborn)
+4. Hypothesis Testing: One-Way ANOVA & Levene's Test for Variance Parity (SciPy)
+5. Market Stability Metric Correlation Matrix (Seaborn)
 
 All plots are saved in the 'graphs/' directory at 300 DPI.
 """
@@ -27,10 +20,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy import stats
-import statsmodels.api as sm
-import statsmodels.formula.api as smf
-from statsmodels.tsa.seasonal import seasonal_decompose
-from statsmodels.graphics.tsaplots import plot_acf
 
 # Configure Matplotlib styling for professional presentations
 plt.rcParams['font.sans-serif'] = 'DejaVu Sans'
@@ -74,10 +63,13 @@ def load_data(filepath='cleaned_commodity_price.csv'):
     return df
 
 # ==============================================================================
-# PLOT 1: Kernel Density Estimation (KDE) Price Distribution Shapes
+# GRAPH 1: Kernel Density Estimation (KDE) Price Distribution Shapes
 # ==============================================================================
 def plot_01_kde_distributions(df):
-    """Plot multi-panel KDE distributions showing price skewness and fat tails."""
+    """
+    Plot multi-panel KDE distributions showing price skewness, multimodality,
+    and heavy tails across key staple commodities.
+    """
     top_commodities = ['Tomato', 'Onion', 'Potato', 'Brinjal', 'Green Chilli', 'Cucumbar(Kheera)']
     palette = sns.color_palette("tab10", len(top_commodities))
     
@@ -108,7 +100,7 @@ def plot_01_kde_distributions(df):
         ax.legend(frameon=True, facecolor='white', framealpha=0.9, fontsize=9)
         ax.grid(True, linestyle='--', alpha=0.5)
         
-    plt.suptitle("Figure 1: Kernel Density Estimation (KDE) of Key Agricultural Commodities\nVisualizing Asymmetry, Skewness & Multi-Modal Pricing",
+    plt.suptitle("Figure 1: Kernel Density Estimation (KDE) of Key Agricultural Commodities\nVisualizing Asymmetry, Positive Skewness & Price Clustering",
                  fontsize=15, fontweight='bold', y=0.99)
     plt.tight_layout()
     output_path = os.path.join(OUTPUT_DIR, '01_commodity_price_distribution_kde.png')
@@ -117,72 +109,13 @@ def plot_01_kde_distributions(df):
     print(f"Saved: {output_path}")
 
 # ==============================================================================
-# PLOT 2: Dual-Axis Price Trend vs. Volatility Spread Percentage
+# GRAPH 2: State-wise Market Pricing Pivot Table Heatmap
 # ==============================================================================
-def plot_02_dual_axis_trend(df):
-    """Plot dual-axis comparison: Modal Price (Left) vs. Volatility Spread % (Right)."""
-    top_comm = df['Commodity'].value_counts().head(12).index
-    summary = df[df['Commodity'].isin(top_comm)].groupby('Commodity', observed=True).agg(
-        Mean_Modal=('Modal_Price', 'mean'),
-        Mean_Spread_Pct=('Price_Spread_Pct', 'mean'),
-        Sample_Count=('Modal_Price', 'count')
-    ).sort_values('Mean_Modal', ascending=False).reset_index()
-    
-    fig, ax1 = plt.subplots(figsize=(15, 7))
-    
-    x = np.arange(len(summary))
-    width = 0.45
-    
-    # Primary Axis: Mean Modal Price (Bar chart)
-    bars = ax1.bar(x, summary['Mean_Modal'], width=width, color='#2b5c8f', alpha=0.85,
-                   label='Average Modal Price (₹/Quintal)', edgecolor='#173f5f', linewidth=1)
-    ax1.set_xlabel('Agricultural Commodity', fontsize=12, fontweight='bold', labelpad=10)
-    ax1.set_ylabel('Average Modal Price (₹/Quintal)', fontsize=12, fontweight='bold', color='#173f5f')
-    ax1.tick_params(axis='y', labelcolor='#173f5f')
-    ax1.set_xticks(x)
-    ax1.set_xticklabels(summary['Commodity'], rotation=35, ha='right', fontsize=10, fontweight='semibold')
-    
-    # Annotate bar values
-    for bar in bars:
-        h = bar.get_height()
-        ax1.annotate(f'₹{h:.0f}',
-                     xy=(bar.get_x() + bar.get_width() / 2, h),
-                     xytext=(0, 4), textcoords="offset points",
-                     ha='center', va='bottom', fontsize=8.5, fontweight='bold', color='#173f5f')
-    
-    # Secondary Axis: Price Spread Percentage (Line chart)
-    ax2 = ax1.twinx()
-    line = ax2.plot(x, summary['Mean_Spread_Pct'], color='#e65100', marker='o', linewidth=2.8,
-                    markersize=8, label='Volatility Spread % ((Max-Min)/Modal)', zorder=5)
-    ax2.set_ylabel('Mean Price Spread % (Intra-Market Volatility)', fontsize=12, fontweight='bold', color='#e65100')
-    ax2.tick_params(axis='y', labelcolor='#e65100')
-    ax2.grid(False)
-    
-    # Annotate line points
-    for i, val in enumerate(summary['Mean_Spread_Pct']):
-        ax2.annotate(f'{val:.1f}%',
-                     xy=(x[i], val),
-                     xytext=(0, 8), textcoords="offset points",
-                     ha='center', va='bottom', fontsize=9, fontweight='bold', color='#b23c00')
-        
-    lines1, labels1 = ax1.get_legend_handles_labels()
-    lines2, labels2 = ax2.get_legend_handles_labels()
-    ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper right', frameon=True,
-               facecolor='white', framealpha=0.95, fontsize=10)
-    
-    plt.title("Figure 2: Dual-Axis Price Trend & Volatility Spread Percentage\nComparing Wholesale Price Levels with Intra-Market Daily Price Dispersion",
-              fontsize=14, fontweight='bold', pad=15)
-    plt.tight_layout()
-    output_path = os.path.join(OUTPUT_DIR, '02_dual_axis_price_and_spread_trend.png')
-    plt.savefig(output_path, dpi=300, bbox_inches='tight')
-    plt.close()
-    print(f"Saved: {output_path}")
-
-# ==============================================================================
-# PLOT 3: State-wise Market Pricing Pivot Table Heatmap
-# ==============================================================================
-def plot_03_pivot_heatmap(df):
-    """Plot 2D Pivot Table Heatmap of State vs Commodity Wholesale Pricing."""
+def plot_02_pivot_heatmap(df):
+    """
+    Plot 2D Pivot Table Heatmap of State vs Commodity Wholesale Pricing
+    to evaluate spatial price disparities and geographic market integration.
+    """
     top_commodities = df['Commodity'].value_counts().head(10).index
     top_states = df['State'].value_counts().head(10).index
     
@@ -200,60 +133,27 @@ def plot_03_pivot_heatmap(df):
     sns.heatmap(pivot_table, annot=True, fmt='.0f', cmap='YlGnBu', cbar_kws={'label': 'Modal Wholesale Price (₹/Quintal)'},
                 linewidths=0.6, linecolor='#e0e0e0', annot_kws={'size': 9, 'fontweight': 'semibold'})
     
-    plt.title("Figure 3: Market-Wise Pricing Matrix (State vs. Commodity Pivot Table)\nHighlighting Regional Price Disparities and Spatial Arbitrage Opportunities",
+    plt.title("Figure 2: Market-Wise Pricing Matrix (State vs. Commodity Pivot Table)\nEvaluating Spatial Price Disparities and Inter-State Arbitrage Gaps",
               fontsize=14, fontweight='bold', pad=15)
     plt.xlabel("Key Agricultural Commodity", fontsize=11, fontweight='bold', labelpad=8)
     plt.ylabel("Producing & Consuming State", fontsize=11, fontweight='bold', labelpad=8)
     plt.xticks(rotation=30, ha='right', fontsize=9.5)
     plt.yticks(fontsize=10)
     plt.tight_layout()
-    output_path = os.path.join(OUTPUT_DIR, '03_statewise_market_pricing_pivot_heatmap.png')
+    
+    output_path = os.path.join(OUTPUT_DIR, '02_statewise_market_pricing_pivot_heatmap.png')
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
     plt.close()
     print(f"Saved: {output_path}")
 
 # ==============================================================================
-# PLOT 4: Regional Price Spread Distribution Boxplots
+# GRAPH 3: Top Volatile Commodities Ranked by Percentage Spread
 # ==============================================================================
-def plot_04_regional_spread_boxplots(df):
-    """Plot Boxplots of Price Spread across major states to assess market stability."""
-    top_states = df['State'].value_counts().head(10).index
-    filtered_df = df[df['State'].isin(top_states)].copy()
-    
-    state_order = filtered_df.groupby('State', observed=True)['Price_Spread'].median().sort_values(ascending=False).index
-    
-    plt.figure(figsize=(14, 7))
-    sns.boxplot(
-        data=filtered_df,
-        x='State',
-        y='Price_Spread',
-        hue='State',
-        legend=False,
-        order=state_order,
-        palette='Spectral',
-        showmeans=True,
-        meanprops={"marker": "D", "markeredgecolor": "black", "markerfacecolor": "yellow", "markersize": 6},
-        flierprops={"marker": "o", "markersize": 3.5, "alpha": 0.5, "markerfacecolor": "gray"}
-    )
-    
-    plt.title("Figure 4: Regional Intra-Market Price Spread Distribution Across Top States\nAssessing Wholesale Market Integration and Spread Volatility (Diamonds = Mean, Lines = Median)",
-              fontsize=13, fontweight='bold', pad=15)
-    plt.xlabel("State (Ranked by Median Spread)", fontsize=11, fontweight='bold', labelpad=8)
-    plt.ylabel("Wholesale Price Spread (Max - Min, ₹/Quintal)", fontsize=11, fontweight='bold', labelpad=8)
-    plt.xticks(rotation=25, ha='right', fontsize=10)
-    plt.ylim(0, filtered_df['Price_Spread'].quantile(0.98) * 1.2)
-    plt.grid(True, linestyle='--', alpha=0.5, axis='y')
-    plt.tight_layout()
-    output_path = os.path.join(OUTPUT_DIR, '04_regional_price_spread_boxplot.png')
-    plt.savefig(output_path, dpi=300, bbox_inches='tight')
-    plt.close()
-    print(f"Saved: {output_path}")
-
-# ==============================================================================
-# PLOT 5: Top Volatile Commodities Ranked by Percentage Spread
-# ==============================================================================
-def plot_05_volatile_commodities_ranking(df):
-    """Plot horizontal ranking of commodities by Percentage Price Spread."""
+def plot_03_volatile_commodities_ranking(df):
+    """
+    Plot horizontal ranking of commodities by Percentage Price Spread
+    to quantify price volatility risk across agricultural crops.
+    """
     comm_stats = df.groupby('Commodity', observed=True).agg(
         count=('Modal_Price', 'count'),
         mean_spread_pct=('Price_Spread_Pct', 'mean'),
@@ -276,7 +176,7 @@ def plot_05_volatile_commodities_ranking(df):
                  va='center', ha='left', fontsize=9, fontweight='bold', color='#333333')
         
     plt.axvline(20, color='#333333', linestyle='--', linewidth=1.2, alpha=0.7, label='Threshold for Elevated Volatility (20%)')
-    plt.title("Figure 5: Top 15 Agricultural Commodities with Highest Price Volatility\nRanked by Average Intra-Day Spread Percentage ((Max-Min)/Modal * 100)",
+    plt.title("Figure 3: Top 15 Agricultural Commodities with Highest Price Volatility\nRanked by Normalized Percentage Spread ((Max-Min)/Modal * 100)",
               fontsize=13, fontweight='bold', pad=15)
     plt.xlabel("Mean Intra-Market Spread Percentage (%)", fontsize=11, fontweight='bold', labelpad=8)
     plt.ylabel("Agricultural Commodity", fontsize=11, fontweight='bold')
@@ -284,97 +184,24 @@ def plot_05_volatile_commodities_ranking(df):
     plt.legend(loc='lower right', frameon=True, facecolor='white', framealpha=0.9)
     plt.grid(True, linestyle='--', alpha=0.5, axis='x')
     plt.tight_layout()
-    output_path = os.path.join(OUTPUT_DIR, '05_top_volatile_commodities_percentage_spread.png')
+    
+    output_path = os.path.join(OUTPUT_DIR, '03_top_volatile_commodities_percentage_spread.png')
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
     plt.close()
     print(f"Saved: {output_path}")
 
 # ==============================================================================
-# PLOT 6: Quantile-Quantile (Q-Q) Normality and Heavy Tail Analysis
+# GRAPH 4: Hypothesis Testing - One-Way ANOVA and Levene's Test
 # ==============================================================================
-def plot_06_qq_normality(df):
-    """Plot Q-Q plots for key commodities to demonstrate non-normality and fat tails."""
-    target_commodities = ['Tomato', 'Onion', 'Potato', 'Green Chilli']
-    fig, axes = plt.subplots(2, 2, figsize=(14, 11))
-    axes = axes.flatten()
-    
-    for i, comm in enumerate(target_commodities):
-        ax = axes[i]
-        prices = df[df['Commodity'] == comm]['Modal_Price'].dropna()
-        standardized = (prices - prices.mean()) / prices.std()
-        (osm, osr), (slope, intercept, r) = stats.probplot(standardized, dist="norm")
-        
-        ax.plot(osm, osr, 'o', color='#1f77b4', alpha=0.6, markersize=5, label='Empirical Price Quantiles')
-        ax.plot(osm, slope * osm + intercept, 'r-', linewidth=2, label=f'Theoretical Normal Fit ($R^2={r**2:.3f}$)')
-        
-        jb_stat, jb_p = stats.jarque_bera(prices)
-        
-        ax.set_title(f'{comm} Normal Q-Q Plot\nJarque-Bera Stat: {jb_stat:.1f} (p-value: {jb_p:.2e})',
-                     fontsize=11, fontweight='bold', pad=8)
-        ax.set_xlabel('Theoretical Normal Quantiles (Z-Score)', fontsize=10)
-        ax.set_ylabel('Standardized Empirical Quantiles', fontsize=10)
-        ax.grid(True, linestyle='--', alpha=0.5)
-        ax.legend(loc='upper left', fontsize=8.5, frameon=True, facecolor='white')
-        
-    plt.suptitle("Figure 6: SciPy Quantile-Quantile (Q-Q) Normality Diagnoses\nEmpirical Evidence of Heavy Tails and Leptokurtosis in Wholesale Agricultural Pricing",
-                 fontsize=14, fontweight='bold', y=0.99)
-    plt.tight_layout()
-    output_path = os.path.join(OUTPUT_DIR, '06_statistical_qq_normality_plots.png')
-    plt.savefig(output_path, dpi=300, bbox_inches='tight')
-    plt.close()
-    print(f"Saved: {output_path}")
-
-# ==============================================================================
-# PLOT 7: Price Discovery & Predictability OLS Regression
-# ==============================================================================
-def plot_07_ols_predictability(df):
-    """Plot Statsmodels OLS Regression measuring price discovery predictability and residuals."""
-    ols_model = smf.ols('Modal_Price ~ Min_Price + Max_Price', data=df).fit()
-    df_eval = df[['Min_Price', 'Max_Price', 'Modal_Price']].dropna().copy()
-    df_eval['Predicted'] = ols_model.predict(df_eval)
-    df_eval['Residuals'] = ols_model.resid
-    
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
-    
-    ax1.scatter(df_eval['Predicted'], df_eval['Modal_Price'], alpha=0.35, color='#2b5c8f', edgecolors='none', s=25)
-    min_bound = min(df_eval['Predicted'].min(), df_eval['Modal_Price'].min())
-    max_bound = max(df_eval['Predicted'].max(), df_eval['Modal_Price'].max())
-    ax1.plot([min_bound, max_bound], [min_bound, max_bound], color='#d62728', linestyle='--', linewidth=2, label='Perfect 1:1 Parity')
-    
-    ax1.set_title(f"A: Wholesale Price Predictability (OLS Fit)\n$R^2 = {ols_model.rsquared:.4f}$, F-stat = {ols_model.fvalue:.1f} (p < 0.001)",
-                  fontsize=12, fontweight='bold')
-    ax1.set_xlabel('Predicted Modal Price (₹/Quintal)', fontsize=11, fontweight='semibold')
-    ax1.set_ylabel('Actual Modal Price (₹/Quintal)', fontsize=11, fontweight='semibold')
-    ax1.legend(loc='upper left', frameon=True, facecolor='white')
-    ax1.grid(True, linestyle='--', alpha=0.5)
-    
-    sns.histplot(df_eval['Residuals'], kde=True, ax=ax2, color='#2ca02c', bins=35, stat="density", alpha=0.4, line_kws={'linewidth': 2})
-    ax2.axvline(0, color='#d62728', linestyle='--', linewidth=1.5, label='Zero Error Baseline')
-    res_mean = df_eval['Residuals'].mean()
-    res_std = df_eval['Residuals'].std()
-    ax2.set_title(f"B: Regression Residual Distribution\nMean = {res_mean:.2f}, Std Dev = ₹{res_std:.2f}",
-                  fontsize=12, fontweight='bold')
-    ax2.set_xlabel('Residual Error (Actual - Predicted, ₹/Quintal)', fontsize=11, fontweight='semibold')
-    ax2.set_ylabel('Density', fontsize=11, fontweight='semibold')
-    ax2.legend(loc='upper right', frameon=True, facecolor='white')
-    ax2.grid(True, linestyle='--', alpha=0.5)
-    
-    plt.suptitle("Figure 7: Price Predictability & Market Efficiency Modeling (Statsmodels OLS Regression)\nEvaluating Wholesale Price Discovery within Daily Arrival Bands",
-                 fontsize=14, fontweight='bold', y=1.02)
-    plt.tight_layout()
-    output_path = os.path.join(OUTPUT_DIR, '07_price_predictability_ols_regression.png')
-    plt.savefig(output_path, dpi=300, bbox_inches='tight')
-    plt.close()
-    print(f"Saved: {output_path}")
-
-# ==============================================================================
-# PLOT 8: Hypothesis Testing - ANOVA and Levene's Test
-# ==============================================================================
-def plot_08_anova_levene_tests(df):
-    """Plot ANOVA regional price parity and Levene's test for variance homogeneity."""
+def plot_04_anova_levene_tests(df):
+    """
+    Plot One-Way ANOVA for regional price parity and Levene's test for variance homogeneity
+    to statistically validate market fragmentation.
+    """
     top_states = df['State'].value_counts().head(8).index
     filtered_df = df[df['State'].isin(top_states)].copy()
     
+    # Statistical tests
     groups_modal = [df[df['State'] == s]['Modal_Price'].dropna() for s in top_states]
     f_stat, f_p = stats.f_oneway(*groups_modal)
     lev_stat, lev_p = stats.levene(*groups_modal)
@@ -390,6 +217,7 @@ def plot_08_anova_levene_tests(df):
     
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
     
+    # Subplot 1: ANOVA Bar Chart with 95% Confidence Intervals
     bars = ax1.bar(state_summary['State'], state_summary['Mean_Price'], yerr=state_summary['CI_95'],
                    capsize=5, color='#4682b4', alpha=0.85, edgecolor='#1c3b5e')
     ax1.set_title(f"A: Regional Price Parity (One-Way ANOVA)\nF-Statistic = {f_stat:.2f}, p-value = {f_p:.2e} (Significant Disparity)",
@@ -400,6 +228,7 @@ def plot_08_anova_levene_tests(df):
     ax1.set_xticklabels(state_summary['State'], rotation=30, ha='right', fontsize=9.5)
     ax1.grid(True, linestyle='--', alpha=0.5, axis='y')
     
+    # Subplot 2: Spread Volatility by State (Levene's Test Context)
     bars2 = ax2.bar(state_summary['State'], state_summary['Mean_Spread'], color='#e06666', alpha=0.85, edgecolor='#990000')
     ax2.set_title(f"B: Regional Volatility Spread (Levene's Variance Test)\nStatistic = {lev_stat:.2f}, p-value = {lev_p:.2e} (Heterogeneous Volatility)",
                   fontsize=11.5, fontweight='bold')
@@ -409,170 +238,23 @@ def plot_08_anova_levene_tests(df):
     ax2.set_xticklabels(state_summary['State'], rotation=30, ha='right', fontsize=9.5)
     ax2.grid(True, linestyle='--', alpha=0.5, axis='y')
     
-    plt.suptitle("Figure 8: SciPy Hypothesis Testing on Regional Price Stability\nRejecting Spatial Price Parity & Volatility Equality Across Indian Agricultural Markets",
+    plt.suptitle("Figure 4: SciPy Hypothesis Testing on Regional Price Stability\nStatistically Rejecting Spatial Price Parity & Volatility Equality Across Indian Markets",
                  fontsize=14, fontweight='bold', y=1.02)
     plt.tight_layout()
-    output_path = os.path.join(OUTPUT_DIR, '08_market_volatility_anova_levene_test.png')
+    
+    output_path = os.path.join(OUTPUT_DIR, '04_market_volatility_anova_levene_test.png')
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
     plt.close()
     print(f"Saved: {output_path}")
 
 # ==============================================================================
-# PLOT 9: Seasonal Time-Series Decomposition (Statsmodels)
+# GRAPH 5: Market Stability Metric Correlation Matrix
 # ==============================================================================
-def plot_09_seasonal_decomposition(df):
-    """Generate seasonal decomposition across agricultural cycles."""
-    np.random.seed(42)
-    dates = pd.date_range(start='2023-06-01', periods=104, freq='W')
-    base_price = df[df['Commodity'] == 'Onion']['Modal_Price'].mean()
-    if np.isnan(base_price) or base_price == 0:
-        base_price = 1750.0
-        
-    trend_comp = base_price + np.linspace(0, 350, 104)
-    t = np.arange(104)
-    seasonal_comp = 420 * np.sin(2 * np.pi * t / 52 + 1.2) + 150 * np.cos(4 * np.pi * t / 52)
-    residual_comp = np.random.normal(0, 110, 104)
-    
-    observed_series = pd.Series(trend_comp + seasonal_comp + residual_comp, index=dates)
-    decomp = seasonal_decompose(observed_series, model='additive', period=52)
-    
-    fig, axes = plt.subplots(4, 1, figsize=(14, 10), sharex=True)
-    
-    decomp.observed.plot(ax=axes[0], color='#1f77b4', linewidth=1.8)
-    axes[0].set_ylabel('Observed (₹/Q)', fontsize=10, fontweight='bold')
-    axes[0].set_title('Observed Wholesale Price Index (Onion/Tomato Benchmark)', fontsize=11, fontweight='bold')
-    axes[0].grid(True, linestyle='--', alpha=0.5)
-    
-    decomp.trend.plot(ax=axes[1], color='#2ca02c', linewidth=2.2)
-    axes[1].set_ylabel('Trend (₹/Q)', fontsize=10, fontweight='bold')
-    axes[1].set_title('Underlying Macro Trend (Inflation & Structural Shift)', fontsize=11, fontweight='bold')
-    axes[1].grid(True, linestyle='--', alpha=0.5)
-    
-    decomp.seasonal.plot(ax=axes[2], color='#ff7f0e', linewidth=1.8)
-    axes[2].set_ylabel('Seasonal (₹/Q)', fontsize=10, fontweight='bold')
-    axes[2].set_title('Recurring Agricultural Seasonality (Post-Harvest Surplus vs Pre-Monsoon Lean Peak)', fontsize=11, fontweight='bold')
-    axes[2].grid(True, linestyle='--', alpha=0.5)
-    
-    decomp.resid.plot(ax=axes[3], color='#d62728', linewidth=1.2, marker='.', markersize=4)
-    axes[3].set_ylabel('Residual (₹/Q)', fontsize=10, fontweight='bold')
-    axes[3].set_title('Irregular Residuals (Unforeseen Supply Gluts, Climate Shocks, Transport Disruptions)', fontsize=11, fontweight='bold')
-    axes[3].set_xlabel('Agricultural Marketing Year & Weeks', fontsize=11, fontweight='bold')
-    axes[3].grid(True, linestyle='--', alpha=0.5)
-    
-    plt.suptitle("Figure 9: Seasonal Time-Series Decomposition (Statsmodels Additive Decomposition)\nDecoupling Long-Term Trend, Crop Harvest Seasonality, and Random Volatility Shocks",
-                 fontsize=14, fontweight='bold', y=0.99)
-    plt.tight_layout()
-    output_path = os.path.join(OUTPUT_DIR, '09_seasonal_decomposition_key_commodities.png')
-    plt.savefig(output_path, dpi=300, bbox_inches='tight')
-    plt.close()
-    print(f"Saved: {output_path}")
-
-# ==============================================================================
-# PLOT 10: Volatility Clustering & Autocorrelation of Price Shocks
-# ==============================================================================
-def plot_10_volatility_clustering(df):
-    """Plot Volatility Clustering and Autocorrelation of squared price innovations."""
-    np.random.seed(101)
-    n_days = 250
-    returns = np.zeros(n_days)
-    sigma2 = np.zeros(n_days)
-    omega = 0.05
-    alpha = 0.25
-    beta = 0.70
-    sigma2[0] = 1.0
-    
-    for i in range(1, n_days):
-        sigma2[i] = omega + alpha * (returns[i-1]**2) + beta * sigma2[i-1]
-        returns[i] = np.random.normal(0, np.sqrt(sigma2[i]))
-        
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 8))
-    
-    ax1.plot(returns, color='#1f77b4', linewidth=1.2)
-    ax1.axhline(0, color='gray', linestyle='--', alpha=0.7)
-    high_vol_mask = np.sqrt(sigma2) > 1.4
-    ax1.fill_between(np.arange(n_days), -3.5, 3.5, where=high_vol_mask,
-                     color='#ff9999', alpha=0.3, label='High-Volatility Clustering Regime (Lean Supply Window)')
-    ax1.set_title("A: Percentage Price Returns Showing Volatility Clustering (ARCH Effect)\nPeriods of Turbulence Cluster Together, Followed by Tranquil Windows",
-                  fontsize=12, fontweight='bold')
-    ax1.set_ylabel("Standardized Return (%)", fontsize=10, fontweight='semibold')
-    ax1.set_xlabel("Market Trading Days", fontsize=10, fontweight='semibold')
-    ax1.legend(loc='upper right', frameon=True, facecolor='white')
-    ax1.grid(True, linestyle='--', alpha=0.5)
-    
-    squared_returns = returns ** 2
-    plot_acf(squared_returns, lags=30, ax=ax2, color='#d62728', alpha=0.05,
-             title="B: Autocorrelation Function (ACF) of Squared Price Changes\nPermanent Autoregressive Memory in Volatility Confirming ARCH Clustering")
-    ax2.set_xlabel("Lag (Days)", fontsize=10, fontweight='semibold')
-    ax2.set_ylabel("Autocorrelation", fontsize=10, fontweight='semibold')
-    ax2.grid(True, linestyle='--', alpha=0.5)
-    
-    plt.suptitle("Figure 10: Statistical Measurement of Volatility Clustering (Statsmodels Autocorrelation)\nEconometric Evidence of Volatility Persistence Across Agricultural Price Cycles",
-                 fontsize=14, fontweight='bold', y=0.99)
-    plt.tight_layout()
-    output_path = os.path.join(OUTPUT_DIR, '10_volatility_clustering_and_autocorrelation.png')
-    plt.savefig(output_path, dpi=300, bbox_inches='tight')
-    plt.close()
-    print(f"Saved: {output_path}")
-
-# ==============================================================================
-# PLOT 11: Grade and Quality Price Dispersion
-# ==============================================================================
-def plot_11_grade_quality_dispersion(df):
-    """Plot price distribution across quality grades (FAQ, Medium, Non-FAQ, Large)."""
-    grade_order = ['FAQ', 'Medium', 'Non-FAQ', 'Large']
-    filtered_df = df[df['Grade'].isin(grade_order)].copy()
-    
-    plt.figure(figsize=(12, 6.5))
-    
-    sns.violinplot(
-        data=filtered_df,
-        x='Grade',
-        y='Modal_Price',
-        hue='Grade',
-        legend=False,
-        order=grade_order,
-        palette='Set2',
-        inner='quartile',
-        cut=0
-    )
-    
-    sns.stripplot(
-        data=filtered_df.sample(min(500, len(filtered_df)), random_state=42),
-        x='Grade',
-        y='Modal_Price',
-        order=grade_order,
-        color='black',
-        alpha=0.25,
-        size=4,
-        jitter=0.2
-    )
-    
-    counts = filtered_df['Grade'].value_counts()
-    for i, grade in enumerate(grade_order):
-        count = counts.get(grade, 0)
-        mean_p = filtered_df[filtered_df['Grade'] == grade]['Modal_Price'].mean()
-        plt.text(i, filtered_df['Modal_Price'].quantile(0.98) * 0.95,
-                 f"N = {count}\nMean = ₹{mean_p:.0f}",
-                 ha='center', fontsize=9.5, fontweight='bold',
-                 bbox=dict(boxstyle='round,pad=0.3', facecolor='white', edgecolor='#cccccc', alpha=0.9))
-        
-    plt.title("Figure 11: Wholesale Price Realization Across Official Quality Grades\nImpact of Standardized Quality Grading on Agricultural Price Discovery",
-              fontsize=13, fontweight='bold', pad=15)
-    plt.xlabel("Official Mandi Quality Grade", fontsize=11, fontweight='bold', labelpad=8)
-    plt.ylabel("Modal Wholesale Price (₹/Quintal)", fontsize=11, fontweight='bold', labelpad=8)
-    plt.ylim(0, filtered_df['Modal_Price'].quantile(0.98) * 1.05)
-    plt.grid(True, linestyle='--', alpha=0.5, axis='y')
-    plt.tight_layout()
-    output_path = os.path.join(OUTPUT_DIR, '11_grade_and_variety_price_dispersion.png')
-    plt.savefig(output_path, dpi=300, bbox_inches='tight')
-    plt.close()
-    print(f"Saved: {output_path}")
-
-# ==============================================================================
-# PLOT 12: Market Stability Metric Correlation Matrix
-# ==============================================================================
-def plot_12_stability_correlation_matrix(df):
-    """Plot correlation heatmap across price boundaries, spreads, and volatility indicators."""
+def plot_05_stability_correlation_matrix(df):
+    """
+    Plot correlation heatmap across price boundaries, spreads, and volatility indicators
+    using a masked lower triangle for optimal visual clarity.
+    """
     metrics_df = df[['Min_Price', 'Max_Price', 'Modal_Price', 'Price_Spread', 'Price_Spread_Pct', 'Spread_Ratio']].dropna()
     metrics_df.columns = [
         'Min Price (₹)',
@@ -603,12 +285,13 @@ def plot_12_stability_correlation_matrix(df):
         annot_kws={'size': 10.5, 'fontweight': 'bold'}
     )
     
-    plt.title("Figure 12: Market Stability Correlation Matrix\nInterrelationship Between Price Discovery Metrics and Spread Volatility",
+    plt.title("Figure 5: Market Stability Correlation Matrix\nInterrelationship Between Price Discovery Metrics and Spread Volatility",
               fontsize=13, fontweight='bold', pad=15)
     plt.xticks(rotation=30, ha='right', fontsize=9.5)
     plt.yticks(fontsize=9.5)
     plt.tight_layout()
-    output_path = os.path.join(OUTPUT_DIR, '12_market_stability_index_matrix.png')
+    
+    output_path = os.path.join(OUTPUT_DIR, '05_market_stability_index_matrix.png')
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
     plt.close()
     print(f"Saved: {output_path}")
@@ -619,51 +302,53 @@ def plot_12_stability_correlation_matrix(df):
 def main():
     print("=" * 70)
     print("AGRICULTURAL MARKET PRICE VOLATILITY & SPREAD ANALYSIS")
-    print("Executing Capstone Plot Generation Pipeline")
+    print("Executing Capstone Core Plot Generation Pipeline (5 Essential Graphs)")
     print("=" * 70)
     
+    # Clean up obsolete graphs if present
+    obsolete_files = [
+        '02_dual_axis_price_and_spread_trend.png',
+        '03_statewise_market_pricing_pivot_heatmap.png',
+        '04_regional_price_spread_boxplot.png',
+        '05_top_volatile_commodities_percentage_spread.png',
+        '06_statistical_qq_normality_plots.png',
+        '07_price_predictability_ols_regression.png',
+        '08_market_volatility_anova_levene_test.png',
+        '09_seasonal_decomposition_key_commodities.png',
+        '10_volatility_clustering_and_autocorrelation.png',
+        '11_grade_and_variety_price_dispersion.png',
+        '12_market_stability_index_matrix.png'
+    ]
+    for obs in obsolete_files:
+        p = os.path.join(OUTPUT_DIR, obs)
+        if os.path.exists(p):
+            try:
+                os.remove(p)
+                print(f"Removed deprecated graph: {obs}")
+            except Exception:
+                pass
+                
     df = load_data('cleaned_commodity_price.csv')
     print(f"Successfully loaded dataset: {len(df)} records across {df['State'].nunique()} states and {df['Commodity'].nunique()} commodities.")
     print(f"Target Output Directory: {OUTPUT_DIR}\n")
     
-    print("[1/12] Generating KDE Price Distribution Shapes...")
+    print("[1/5] Generating KDE Price Distribution Shapes...")
     plot_01_kde_distributions(df)
     
-    print("[2/12] Generating Dual-Axis Price Trend vs. Volatility Spread...")
-    plot_02_dual_axis_trend(df)
+    print("[2/5] Generating State-wise Market Pricing Pivot Heatmap...")
+    plot_02_pivot_heatmap(df)
     
-    print("[3/12] Generating State-wise Market Pricing Pivot Heatmap...")
-    plot_03_pivot_heatmap(df)
+    print("[3/5] Generating Top Volatile Commodities Ranking...")
+    plot_03_volatile_commodities_ranking(df)
     
-    print("[4/12] Generating Regional Price Spread Distribution Boxplots...")
-    plot_04_regional_spread_boxplots(df)
+    print("[4/5] Generating SciPy ANOVA & Levene's Hypothesis Testing...")
+    plot_04_anova_levene_tests(df)
     
-    print("[5/12] Generating Top Volatile Commodities Ranking...")
-    plot_05_volatile_commodities_ranking(df)
-    
-    print("[6/12] Generating SciPy Q-Q Normality Diagnoses...")
-    plot_06_qq_normality(df)
-    
-    print("[7/12] Generating Statsmodels Price Predictability OLS Regression...")
-    plot_07_ols_predictability(df)
-    
-    print("[8/12] Generating SciPy ANOVA & Levene's Hypothesis Testing...")
-    plot_08_anova_levene_tests(df)
-    
-    print("[9/12] Generating Statsmodels Seasonal Time-Series Decomposition...")
-    plot_09_seasonal_decomposition(df)
-    
-    print("[10/12] Generating Volatility Clustering & ACF Analysis...")
-    plot_10_volatility_clustering(df)
-    
-    print("[11/12] Generating Grade & Quality Price Dispersion Plot...")
-    plot_11_grade_quality_dispersion(df)
-    
-    print("[12/12] Generating Market Stability Metric Correlation Matrix...")
-    plot_12_stability_correlation_matrix(df)
+    print("[5/5] Generating Market Stability Metric Correlation Matrix...")
+    plot_05_stability_correlation_matrix(df)
     
     print("\n" + "=" * 70)
-    print("ALL 12 GRAPHS GENERATED SUCCESSFULLY!")
+    print("ALL 5 CORE GRAPHS GENERATED SUCCESSFULLY!")
     print(f"Directory: {OUTPUT_DIR}")
     print("=" * 70)
 
