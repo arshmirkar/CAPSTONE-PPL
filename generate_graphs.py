@@ -63,65 +63,63 @@ def load_data(filepath='cleaned_commodity_price.csv'):
     return df
 
 # ==============================================================================
-# GRAPH 1: Kernel Density Estimation (KDE) Price Distribution Shapes
+# GRAPH 1: Price Distribution & KDE Shapes (Top 4 Essential Staples)
 # ==============================================================================
 def plot_01_kde_distributions(df):
     """
-    Plot multi-panel KDE distributions showing price skewness, multimodality,
-    and heavy tails across key staple commodities.
+    Simplified, easy-to-explain 2x2 grid showing the wholesale price distribution
+    for the 4 most important staples (Tomato, Onion, Potato, Green Chilli).
+    Y-axis shows the actual count of Mandis with a smooth KDE probability curve.
     """
-    top_commodities = ['Tomato', 'Onion', 'Potato', 'Brinjal', 'Green Chilli', 'Cucumbar(Kheera)']
-    palette = sns.color_palette("tab10", len(top_commodities))
+    top_commodities = ['Tomato', 'Onion', 'Potato', 'Green Chilli']
+    colors = ['#d9534f', '#f0ad4e', '#5cb85c', '#0275d8']
     
-    fig, axes = plt.subplots(2, 3, figsize=(16, 10))
+    fig, axes = plt.subplots(2, 2, figsize=(14, 9))
     axes = axes.flatten()
     
     for i, commodity in enumerate(top_commodities):
         ax = axes[i]
         subset = df[df['Commodity'] == commodity]['Modal_Price'].dropna()
-        color = palette[i]
+        color = colors[i]
         
-        # Plot histogram + KDE
-        sns.histplot(subset, kde=True, ax=ax, color=color, stat="density",
-                     bins=20, alpha=0.35, edgecolor=color, line_kws={'linewidth': 2.2})
+        # Plot count histogram + smooth KDE line
+        sns.histplot(subset, kde=True, ax=ax, color=color, stat="count",
+                     bins=15, alpha=0.35, edgecolor=color, line_kws={'linewidth': 2.4})
         
         mean_val = subset.mean()
-        median_val = subset.median()
-        skew_val = subset.skew()
         
-        # Add summary reference lines
-        ax.axvline(mean_val, color='#d62728', linestyle='--', linewidth=1.8, label=f'Mean: ₹{mean_val:.0f}')
-        ax.axvline(median_val, color='#1f77b4', linestyle=':', linewidth=2.0, label=f'Median: ₹{median_val:.0f}')
+        # Clean, simple average price line
+        ax.axvline(mean_val, color='red', linestyle='--', linewidth=2.0,
+                   label=f'Avg Price: INR {mean_val:.0f}/Q')
         
-        ax.set_title(f'{commodity} Price Density\n(Skewness: {skew_val:.2f}, N={len(subset)})',
+        ax.set_title(f'{commodity} (Total Mandis: {len(subset)})',
                      fontsize=12, fontweight='bold', pad=8)
-        ax.set_xlabel('Modal Price (₹/Quintal)', fontsize=10)
-        ax.set_ylabel('Probability Density', fontsize=10)
-        ax.legend(frameon=True, facecolor='white', framealpha=0.9, fontsize=9)
+        ax.set_xlabel('Modal Wholesale Price (INR / Quintal)', fontsize=10.5, fontweight='bold')
+        ax.set_ylabel('Number of Mandis (Count)', fontsize=10.5, fontweight='bold')
+        ax.legend(frameon=True, facecolor='white', framealpha=0.95, fontsize=10)
         ax.grid(True, linestyle='--', alpha=0.5)
         
-    plt.suptitle("Figure 1: Kernel Density Estimation (KDE) of Key Agricultural Commodities\nVisualizing Asymmetry, Positive Skewness & Price Clustering",
-                 fontsize=15, fontweight='bold', y=0.99)
+    plt.suptitle("Figure 1: Wholesale Price Distributions of Key Staple Commodities\nComparing Price Stability (Potato Clusters Tight) vs. Volatility Spikes (Tomato Stretches Wide)",
+                 fontsize=13, fontweight='bold', y=0.99)
     plt.tight_layout()
     output_path = os.path.join(OUTPUT_DIR, '01_commodity_price_distribution_kde.png')
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
     plt.close()
-    print(f"Saved: {output_path}")
+    print(f"Saved simplified: {output_path}")
 
 # ==============================================================================
-# GRAPH 2: State-wise Market Pricing Pivot Table Heatmap
+# GRAPH 2: State-wise Market Pricing Pivot Table Heatmap (5 States x 5 Crops)
 # ==============================================================================
 def plot_02_pivot_heatmap(df):
     """
-    Plot 2D Pivot Table Heatmap of State vs Commodity Wholesale Pricing
-    to evaluate spatial price disparities and geographic market integration.
+    Simplified 5x5 Matrix comparing 5 major producing & consuming states
+    across the top 5 staple crops. Every number is large, bold, and easy to read.
     """
-    top_commodities = df['Commodity'].value_counts().head(10).index
-    top_states = df['State'].value_counts().head(10).index
+    top_5_comm = ['Tomato', 'Onion', 'Potato', 'Brinjal', 'Green Chilli']
+    top_5_states = ['Uttar Pradesh', 'Kerala', 'Punjab', 'Gujarat', 'Rajasthan']
     
-    filtered_df = df[df['Commodity'].isin(top_commodities) & df['State'].isin(top_states)]
+    filtered_df = df[df['Commodity'].isin(top_5_comm) & df['State'].isin(top_5_states)]
     
-    # Create pivot table of mean Modal Price
     pivot_table = pd.pivot_table(
         filtered_df,
         values='Modal_Price',
@@ -129,23 +127,34 @@ def plot_02_pivot_heatmap(df):
         columns='Commodity',
         aggfunc='mean'
     )
+    pivot_table = pivot_table.reindex(top_5_states)[top_5_comm]
     
-    plt.figure(figsize=(14, 8))
-    sns.heatmap(pivot_table, annot=True, fmt='.0f', cmap='YlGnBu', cbar_kws={'label': 'Modal Wholesale Price (₹/Quintal)'},
-                linewidths=0.6, linecolor='#e0e0e0', annot_kws={'size': 9, 'fontweight': 'semibold'})
+    plt.figure(figsize=(11, 7))
+    annot_labels = pivot_table.map(lambda x: f'INR {x:.0f}' if pd.notnull(x) else 'N/A')
     
-    plt.title("Figure 2: Market-Wise Pricing Matrix (State vs. Commodity Pivot Table)\nEvaluating Spatial Price Disparities and Inter-State Arbitrage Gaps",
-              fontsize=14, fontweight='bold', pad=15)
+    sns.heatmap(
+        pivot_table,
+        annot=annot_labels,
+        fmt='',
+        cmap='YlGnBu',
+        linewidths=1.2,
+        linecolor='white',
+        cbar_kws={'label': 'Average Wholesale Price (INR / Quintal)'},
+        annot_kws={'size': 11, 'fontweight': 'bold'}
+    )
+    
+    plt.title("Figure 2: State-Wise Wholesale Price Comparison Matrix (5 Major States vs. 5 Key Crops)\nDirect Visual Evidence of Regional Price Disparities (Kerala Trades at 2.5x to 3x Uttar Pradesh)",
+              fontsize=12, fontweight='bold', pad=14)
     plt.xlabel("Key Agricultural Commodity", fontsize=11, fontweight='bold', labelpad=8)
     plt.ylabel("Producing & Consuming State", fontsize=11, fontweight='bold', labelpad=8)
-    plt.xticks(rotation=30, ha='right', fontsize=9.5)
-    plt.yticks(fontsize=10)
+    plt.xticks(fontsize=10.5, fontweight='semibold')
+    plt.yticks(fontsize=10.5, fontweight='semibold')
     plt.tight_layout()
     
     output_path = os.path.join(OUTPUT_DIR, '02_statewise_market_pricing_pivot_heatmap.png')
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
     plt.close()
-    print(f"Saved: {output_path}")
+    print(f"Saved simplified: {output_path}")
 
 # ==============================================================================
 # GRAPH 3: Top Volatile Commodities Ranked by Percentage Spread

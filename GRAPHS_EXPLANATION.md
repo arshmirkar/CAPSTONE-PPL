@@ -38,8 +38,8 @@ To rigorously resolve this problem statement, our capstone analysis answers five
 
 | Graph # | File Name | Primary Method / Test | Key Economic Insight |
 |:---:|---|---|---|
-| **Graph 1** | `01_commodity_price_distribution_kde.png` | Kernel Density Estimation (KDE) | Proves staple prices are heavily right-skewed; mean prices distort reality due to long tails of price spikes. |
-| **Graph 2** | `02_statewise_market_pricing_pivot_heatmap.png` | 2D Pivot Table Heatmap Matrix | Exposes extreme spatial price gaps: consuming states (Kerala) trade at 2.5× to 3× higher prices than producer states (UP). |
+| **Graph 1** | `01_commodity_price_distribution_kde.png` | Distribution of Top 4 Staples (Count + KDE) | Proves cold-stored crops (Potato) cluster tightly around ₹1,000, while perishables (Tomato) have wild price spikes up to ₹3,500. |
+| **Graph 2** | `02_statewise_market_pricing_pivot_heatmap.png` | State-Wise 5x5 Pricing Matrix (Heatmap) | Exposes extreme spatial price gaps: consuming states (Kerala) trade at 2.5× to 3× higher prices than producer states (UP, Punjab). |
 | **Graph 3** | `03_top_volatile_commodities_percentage_spread.png` | Normalized Spread % (`(Max-Min)/Modal`) | Identifies the *Perishable Volatility Paradox*: low-cost vine crops (Cucumber, Pumpkin) suffer massive 25%–29% swings. |
 | **Graph 4** | `04_market_volatility_anova_levene_test.png` | SciPy One-Way ANOVA & Levene's Test | Statistically rejects the Law of One Price ($F=75.92, p < 10^{-58}$) and proves volatility is unequal across states ($p < 10^{-9}$). |
 | **Graph 5** | `05_market_stability_index_matrix.png` | Masked Pearson Correlation Heatmap | Quantifies that higher-priced crops experience lower relative percentage volatility ($r = -0.19$). |
@@ -50,59 +50,61 @@ To rigorously resolve this problem statement, our capstone analysis answers five
 
 ---
 
-## GRAPH 1: Kernel Density Estimation (KDE) Price Distribution Shapes
+## GRAPH 1: Wholesale Price Distributions (Top 4 Essential Staples)
 - **Saved File:** `graphs/01_commodity_price_distribution_kde.png`
-- **Focus Commodities:** Tomato, Onion, Potato, Brinjal, Green Chilli, Cucumber (Kheera)
-- **Visual Elements:** Multi-panel subplots, Histogram bins (density), KDE smooth probability curve, Red dashed Mean line, Blue dotted Median line.
+- **Focus Crops:** Tomato, Onion, Potato, Green Chilli (2x2 Grid)
+- **Visual Elements:** Clear bars showing **Number of Mandis (Count)**, smooth KDE curve, red dashed line for **Average Price (₹/Quintal)**.
 
-### A. Why This Graph Was Made
-In agricultural economics, stakeholders and researchers routinely rely on summary averages (Mean Price) to report market conditions. However, wholesale commodity arrivals fluctuate violently with weather, quality grading, and daily truckloads.
-This graph was made to:
-1. Reveal the **true probability distribution shape** of wholesale prices for essential kitchen staples.
-2. Investigate whether prices cluster around a single price or split into multiple pricing tiers (multimodality).
-3. Visualize the gap between the **Mean** (distorted by extreme spikes) and the **Median** (the true price typical farmers receive).
+### A. What Does This Graph Show? (Simple Language)
+Instead of looking at confusing decimals or abstract math, this graph answers a very basic question:
+> *"At what price did most wholesale markets in India sell potatoes, onions, tomatoes, and chillies on this day?"*
 
-### B. Why That Specific Test / Technique Was Needed (Why KDE?)
-- **Why NOT a Simple Bar Chart of Means?** A bar chart collapses thousands of market transactions into a single flat height. It hides whether prices were tightly clustered around ₹1,500 or swinging between ₹400 and ₹5,000.
-- **Why NOT a Basic Histogram Alone?** Histograms are sensitive to bin width and bin edges. Choosing 10 bins vs 25 bins can completely change the visual interpretation.
-- **Why Kernel Density Estimation (KDE)?**
-  - **Non-Parametric Estimation:** KDE makes zero prior assumptions about the distribution (unlike Gaussian models). It places a smooth kernel (Gaussian curve) over every observation to reconstruct the true underlying continuous Probability Density Function (PDF).
-  - **Detecting Asymmetry & Skewness:** KDE visually proves positive skewness (Skewness > 1.8 for Tomato and Onion), where the red mean line is pulled far to the right of the blue median line.
-  - **Identifying Fat Tails:** It captures the long right-hand tail of localized price spikes that would otherwise be dismissed as outliers.
+- **The Height of the Bars:** Tells you how many mandis in India sold at that price.
+- **The Smooth Line (KDE):** Shows the overall shape of the price pattern.
+- **The Red Dashed Line:** Shows the official national average price.
 
-### C. Simple Language Explanation (For Non-Technical Audiences)
-> *"Think of this graph like a crowd density map. Where the hill is highest, that is where most farmers sold their produce on that day. If the hill is balanced like a bell, prices are predictable. But notice how for Tomato and Onion, the hill leans heavily to the left, and a long tail stretches out to the right. This means that while most farmers sold their crops for modest prices (around ₹1,200/quintal), a few markets experienced severe shortages where prices spiked to ₹4,500 or ₹6,000. The red average line gives a falsely high impression because of those few extreme spikes."*
+### B. What is the Big Insight? (Why This Graph is Useful)
+Notice the contrast between **Potato** and **Tomato**:
+1. **Potato (High Stability):**  
+   Look at how tightly packed all the mandis are around **₹1,000/quintal**. Almost every market in India sells potatoes at nearly the same price. Why? Because potatoes can sit in cold storage for months, which keeps supply steady and stops sudden price spikes.
+2. **Tomato & Chilli (High Volatility):**  
+   Look at how wide the bars stretch—from **₹500 all the way to ₹3,500/quintal**! Why? Because tomatoes spoil in 2–3 days. If one region faces heavy rain or transport delay, prices spike immediately to extreme levels.
 
-### D. Viva & Presentation Script
-> *"Respected evaluators, looking at Graph 1, we implemented Kernel Density Estimation across India's top six agricultural commodities. Standard economic models often assume price symmetry. However, our KDE curves empirically prove heavy positive skewness. Notice that for perishables like Tomato and Onion, the red mean line is pulled significantly to the right of the blue median line. This demonstrates that using standard averages distorts market reality, as localized price shocks create severe fat tails. Potato, conversely, shows the most compact distribution, highlighting the stabilizing effect of existing cold storage networks."*
+### C. Why This Specific Visual Was Chosen (Why Count + KDE?)
+- **Why NOT a simple average table?** An average hides the truth. If an examiner asks: *"Did all farmers get ₹1,400 for tomatoes?"*, a simple average says yes, but this graph proves that some farmers were forced to sell at ₹500 while others got ₹3,500!
+- **Why Number of Mandis on the Y-Axis?** Instead of abstract "probability density" fractions (like 0.0004), the Y-axis simply counts the physical markets (e.g., 40 mandis, 20 mandis). It is 100% intuitive to explain during your viva.
+
+### D. Viva Presentation Script (Say This in 20 Seconds!)
+> *"Examiners, Graph 1 shows the price distribution across Indian mandis for our 4 top staple crops. The height of the bars shows the number of markets, while the smooth curve shows the KDE density. Notice the stark difference between Potato and Tomato: Potato clusters tightly around ₹1,000 because cold storage stabilizes the market, whereas Tomato stretches widely up to ₹3,500 because perishability causes severe localized price spikes. This proves that perishability is a direct driver of wholesale price instability."*
 
 ---
 
-## GRAPH 2: State-Wise Market Pricing Matrix (2D Pivot Table Heatmap)
-- **Saved File:** `graphs/02_statewise_market_pricing_pivot_heatmap.png` (also accessible as `03_...`)
-- **Dimensions:** Top 10 States (Rows) $\times$ Top 10 Agricultural Commodities (Columns)
-- **Visual Elements:** Color intensity gradient (`YlGnBu`), annotated mean wholesale price in ₹/Quintal inside each cell.
+## GRAPH 2: State-Wise Wholesale Price Comparison Matrix (5 Major States vs. 5 Key Crops)
+- **Saved File:** `graphs/02_statewise_market_pricing_pivot_heatmap.png`
+- **Dimensions:** 5 Major States (Rows) $\times$ 5 Essential Crops (Columns) = Clean 25-Cell Grid
+- **States Compared:** Uttar Pradesh, Punjab, Rajasthan (Surplus/Producing) vs. Gujarat, Kerala (Consuming/Deficit)
+- **Visual Elements:** Large, bold price tags in every cell (`INR 873`, `INR 2,530`), color gradient from pale yellow (cheap) to deep blue (expensive).
 
-### A. Why This Graph Was Made
-India has over 2,500 regulated wholesale APMC mandis spread across diverse states. The central government created initiatives like the electronic National Agriculture Market (e-NAM) under the vision of *"One Nation, One Market."*
-This graph was made to:
-1. Test whether wholesale prices for identical commodities are unified across states.
-2. Directly quantify the **spatial price spread** (the rupee gap between producing and consuming states).
-3. Identify clear **inter-state arbitrage opportunities** where regional supply-demand mismatches drive drastic price divergence.
+### A. What Does This Graph Show? (Simple Language)
+This is a direct price comparison across state borders. It answers:
+> *"Does a farmer in Uttar Pradesh get the same price as a farmer in Kerala on the exact same day?"*
 
-### B. Why That Specific Test / Technique Was Needed (Why 2D Pivot Table Heatmap?)
-- **Why NOT Grouped Bar Charts?** Displaying 10 states across 10 commodities requires 100 individual bars. Grouped bar charts produce overwhelming cognitive clutter where geographic trends cannot be visually parsed.
-- **Why NOT Multiple Summary Tables?** A raw data table requires the viewer to mentally calculate numbers row by row, obscuring the geographic macro-pattern.
-- **Why a 2D Pivot Table Heatmap?**
-  - **Multi-Dimensional Cross-Tabulation:** In Pandas, `pd.pivot_table(index='State', columns='Commodity', values='Modal_Price', aggfunc='mean')` efficiently reorganizes over 2,700 granular mandi transactions into a normalized 2D spatial pricing tensor.
-  - **Preattentive Visual Perception:** The human eye immediately processes color saturation. Dark blue cells instantly communicate high-cost consumption zones, while pale yellow cells pinpoint low-cost production basins.
-  - **Empirical Test of the Law of One Price:** In a frictionless, perfectly integrated national market, every column would show a uniform shade. The sharp color contrasts across rows provide immediate visual refutation of national market integration.
+- **Pale Yellow Cells:** Cheap wholesale prices (producing agrarian states with excess supply).
+- **Deep Blue Cells:** Expensive wholesale prices (consuming states that depend on incoming trucks).
+- **Every number inside the box:** The actual average wholesale price in Rupees per Quintal (₹/Q).
 
-### C. Simple Language Explanation (For Non-Technical Audiences)
-> *"This graph is like a temperature map of commodity prices across India. Yellow means cheap produce, and dark blue means expensive produce. If India were truly one unified market, every column from top to bottom would be the same shade of color. But look at the Tomato column: in Uttar Pradesh, it is pale yellow at ₹1,150 per quintal, while in Kerala, it turns dark blue at over ₹3,200 per quintal! That is nearly triple the price on the exact same date, proving that food does not flow freely between states to balance prices out."*
+### B. What is the Big Insight? (Why This Graph is Useful)
+Look at the numbers horizontally across any row:
+1. **Tomato:** In Uttar Pradesh, wholesale tomatoes traded at **₹873/quintal** (₹8.7/kg). In Kerala on the exact same date, tomatoes traded at **₹2,530/quintal** (₹25.3/kg)—**nearly 3 times higher**!
+2. **Potato:** In Punjab, potatoes traded at **₹882/quintal**, while in Kerala they traded at **₹3,358/quintal**—**nearly 4 times higher**!
+3. **The Core Discovery:** If India had a unified national market, all cells in a column would be roughly the same color. The sharp contrast (yellow in the North, dark blue in the South) proves that India's wholesale markets remain geographically fragmented.
 
-### D. Viva & Presentation Script
-> *"Turning to Graph 2, we generated a 2D Pivot Table Heatmap combining Pandas matrix aggregation with Seaborn visualization. This directly addresses the spatial price spread requirement of our rubric. If India had achieved seamless market integration under e-NAM, each commodity column would show color uniformity. Instead, we observe massive regional price fragmentation: consumer states like Kerala and Himachal Pradesh consistently display deep blue high-price regimes, whereas surplus agrarian states like UP and Punjab remain pale yellow. For Tomato, prices in Kerala exceed UP by nearly 300%, illustrating massive inter-state supply bottlenecks."*
+### C. Why This Specific Visual Was Chosen (Why 5x5 Matrix?)
+- **Why NOT a massive 100-cell table?** A 10x10 grid is overwhelming and full of tiny text that professors cannot read from a distance. 
+- **Why a 5x5 Matrix?** By focusing on the 5 largest agricultural states across the 5 top crops, every cell is large, bold, and readable in 2 seconds. It cuts out 75% of visual clutter while delivering 100% of the economic proof.
+
+### D. Viva Presentation Script (Say This in 20 Seconds!)
+> *"Turning to Graph 2, we generated a 5x5 State-Wise Pricing Matrix to test if India operates as a unified agricultural market. Notice the striking visual contrast between producing states in the North and consuming states in the South. In Uttar Pradesh, wholesale tomatoes trade at ₹873 per quintal, while in Kerala they trade at ₹2,530 per quintal—nearly triple the price on the exact same day! For Potato, Kerala is nearly four times higher than Punjab. This matrix provides undeniable visual evidence of inter-state trade barriers and huge geographic arbitrage opportunities."*
 
 ---
 

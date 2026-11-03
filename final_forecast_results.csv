@@ -1,0 +1,2 @@
+Model,"Order (p, d, q)",MAE (INR/Quintal),RMSE (INR/Quintal),MAPE (%),Accuracy (%)
+"ARIMA (1, 1, 1)","(1, 1, 1)",166.19,203.1,9.45,90.55
