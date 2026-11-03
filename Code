@@ -10,7 +10,7 @@ This script generates the 5 Core Analytical Graphs for the capstone project:
 4. Hypothesis Testing: One-Way ANOVA & Levene's Test for Variance Parity (SciPy)
 5. Market Stability Metric Correlation Matrix (Seaborn)
 
-All plots are saved in the 'graphs/' directory at 300 DPI.
+
 """
 
 import os
