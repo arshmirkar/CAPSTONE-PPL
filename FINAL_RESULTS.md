@@ -37,7 +37,7 @@ The **ARIMA(1, 1, 1)** model was trained on the first 88 historical weeks and te
 
 | Figure # | Filename | What It Shows |
 |:---:|---|---|
-| **Figure F1** | [`forecast_01_seasonal_decomposition.png`](graphs/forecast_01_seasonal_decomposition.png) | Separates the price into Trend (inflation), Seasonality (harvest wave), and Residual noise. |
+| **Figure F1** | [`forecast_01_seasonal_decomposition.png`](graphs/forecast_01_seasonal_decomposition.png) | Separates the price into Observed (actuals), Trend (inflation), and Seasonality (annual crop cycle). |
 | **Figure F2** | [`forecast_02_model_identification_acf_pacf.png`](graphs/forecast_02_model_identification_acf_pacf.png) | ADF test proves the series is stationary ($p = 0.042$), and ACF/PACF plots confirm $p=1, q=1$. |
 | **Figure F3** | [`forecast_03_price_forecast.png`](graphs/forecast_03_price_forecast.png) | Historical training data (blue), Actual test prices (black dots), and ARIMA(1, 1, 1) forecast line (orange) with 95% confidence band. |
 

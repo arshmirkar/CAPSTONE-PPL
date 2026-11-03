@@ -62,11 +62,10 @@ noise = np.random.normal(0, 55, 104)
 decomp = seasonal_decompose(ts, model='additive', period=52)
 ```
 - **Explanation:**
-  - Takes the weekly series and separates it into 4 subplots:
+  - Takes the weekly series and separates it into 3 clear panels:
     1. **Observed:** The raw weekly price curve.
-    2. **Trend:** The upward inflation line.
-    3. **Seasonal:** The repeating annual harvest wave.
-    4. **Residual:** The leftover random noise centered around zero.
+    2. **Trend:** The upward long-term inflation line.
+    3. **Seasonal:** The repeating annual harvest wave (harvest drop vs summer peak).
   - **Saved as:** `graphs/forecast_01_seasonal_decomposition.png`.
 
 ---

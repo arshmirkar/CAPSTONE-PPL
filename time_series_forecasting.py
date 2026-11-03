@@ -66,13 +66,15 @@ def create_commodity_time_series():
 # ==============================================================================
 def run_seasonal_decomposition(ts):
     """
-    Decomposes the series into 4 simple parts:
-    Observed = Trend + Seasonal + Residual
+    Decomposes the series into 3 clear, intuitive components:
+    1. Observed (Actual Market Price)
+    2. Trend (Underlying Long-Term Inflation)
+    3. Seasonal (Annual Harvest Cycle)
     """
     print("\n--- STEP 2: Running Seasonal Decomposition ---")
     decomp = seasonal_decompose(ts, model='additive', period=52)
     
-    fig, axes = plt.subplots(4, 1, figsize=(14, 8.5), sharex=True)
+    fig, axes = plt.subplots(3, 1, figsize=(14, 7.5), sharex=True)
     
     decomp.observed.plot(ax=axes[0], color='#1f77b4', linewidth=1.8)
     axes[0].set_ylabel('Observed (INR/Q)', fontweight='bold', fontsize=9.5)
@@ -81,21 +83,16 @@ def run_seasonal_decomposition(ts):
     
     decomp.trend.plot(ax=axes[1], color='#2ca02c', linewidth=2.0)
     axes[1].set_ylabel('Trend (INR/Q)', fontweight='bold', fontsize=9.5)
-    axes[1].set_title('B: Macro Trend (Gradual Inflation Over 2 Years)', fontweight='bold', fontsize=11)
+    axes[1].set_title('B: Macro Inflation Trend (Steady Long-Term Growth)', fontweight='bold', fontsize=11)
     axes[1].grid(True, linestyle='--', alpha=0.5)
     
     decomp.seasonal.plot(ax=axes[2], color='#ff7f0e', linewidth=1.8)
     axes[2].set_ylabel('Seasonal (INR/Q)', fontweight='bold', fontsize=9.5)
-    axes[2].set_title('C: Annual Seasonal Cycle (Harvest Drop vs Summer Lean Peak)', fontweight='bold', fontsize=11)
+    axes[2].set_title('C: Annual Seasonal Cycle (Harvest Glut Drop vs Summer Lean-Season Peak)', fontweight='bold', fontsize=11)
+    axes[2].set_xlabel('Date (Weekly Records)', fontweight='bold', fontsize=10.5)
     axes[2].grid(True, linestyle='--', alpha=0.5)
     
-    decomp.resid.plot(ax=axes[3], color='#d62728', linewidth=1.2, marker='.', markersize=4)
-    axes[3].set_ylabel('Residual (INR/Q)', fontweight='bold', fontsize=9.5)
-    axes[3].set_title('D: Random Residual Noise (Unforeseen Supply Shocks)', fontweight='bold', fontsize=11)
-    axes[3].set_xlabel('Date (Weekly Records)', fontweight='bold', fontsize=10.5)
-    axes[3].grid(True, linestyle='--', alpha=0.5)
-    
-    plt.suptitle("Figure F1: Seasonal Time-Series Decomposition\nSeparating Overall Trend, Annual Crop Cycles, and Random Market Noise",
+    plt.suptitle("Figure F1: Seasonal Time-Series Decomposition\nDecoupling Underlying Inflation Trend from Recurring Annual Crop Harvest Cycles",
                  fontsize=13, fontweight='bold', y=0.99)
     plt.tight_layout()
     output_path = os.path.join(GRAPHS_DIR, 'forecast_01_seasonal_decomposition.png')
