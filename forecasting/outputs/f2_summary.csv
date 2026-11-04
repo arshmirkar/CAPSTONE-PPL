@@ -1,0 +1,11 @@
+,value
+SMA4_rmse,67.16696191874468
+SMA13_rmse,205.9407975814639
+EWMA13_rmse,171.07829769937408
+rel_resid_additive,0.02004843583078833
+rel_resid_multiplicative,0.017633833707862246
+trend_slope_per_week,2.558516394779608
+peak_month,October
+trough_month,May
+peak_index,1.2672622508074303
+trough_index,0.8184775178916399

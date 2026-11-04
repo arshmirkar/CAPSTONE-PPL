@@ -1,0 +1,5 @@
+,MAE,RMSE,MAPE_%,100-MAPE_%
+"Seasonal-adjusted ARIMA(1, 1, 2)",80.19,94.66,4.5,95.5
+"Plain ARIMA(1,1,1) on raw series",357.5,403.16,21.85,78.15
+Seasonal naive (same week last year),140.9,157.88,7.86,92.14
+Naive (last observed value),420.33,469.85,25.64,74.36

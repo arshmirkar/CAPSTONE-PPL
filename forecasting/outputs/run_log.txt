@@ -1,0 +1,179 @@
+
+==================== f1_stationarity ====================
+2022-05-08    1263.67
+2022-05-15    1218.59
+2022-05-22    1292.84
+Freq: W-SUN, Name: Modal_Price, dtype: float64 
+... 156 weekly observations, 2022-05-08 -> 2025-04-27
+Subset (Oct-Dec 2024):
+ 2024-10-06    2435.0
+2024-10-13    2257.0
+2024-10-20    2293.0
+2024-10-27    2260.0
+2024-11-03    2273.0
+2024-11-10    2174.0
+2024-11-17    2267.0
+2024-11-24    2161.0
+2024-12-01    2029.0
+2024-12-08    2001.0
+2024-12-15    2022.0
+2024-12-22    1994.0
+2024-12-29    2003.0
+Freq: W-SUN
+                 Series  ADF_stat  p_value  crit_5% Stationary(alpha=0.05)
+         Original (d=0)    -5.060   0.0000   -2.881                    Yes
+     Check: white noise    -9.120   0.0000   -2.876                    Yes
+     Check: random walk    -1.302   0.6282   -2.876                     No
+Check: random walk, d=1    -9.134   0.0000   -2.876                    Yes
+  Check: quadratic, d=1     0.174   0.9708   -2.877                     No
+  Check: quadratic, d=2    -8.128   0.0000   -2.877                    Yes
+
+ADF-based differencing order for the raw price series: d = 0 (ADF only tests for a unit root; it does NOT remove trend/seasonality - see F2/F3)
+saved forecasting/figures/F1_stationarity.png
+
+==================== f2_smoothing_decomposition ====================
+RMSE of each smoother vs the actual price (lower = follows recent changes more closely):
+  SMA-4       67.2
+  SMA-13     205.9
+  EWMA-13    171.1
+  additive        relative residual std = 0.0200
+  multiplicative  relative residual std = 0.0176
+Chosen decomposition model: multiplicative
+           Seasonal_index  Effect_%
+January             0.951      -4.9
+February            0.865     -13.5
+March               0.830     -17.0
+April               0.838     -16.2
+May                 0.818     -18.2
+June                0.869     -13.1
+July                0.949      -5.1
+August              1.094       9.4
+September           1.211      21.1
+October             1.267      26.7
+November            1.219      21.9
+December            1.078       7.8
+Highest: October  Lowest: May
+Trend growth = INR 2.56 per quintal per week  (~INR 133 per year)
+Synthetic check: true trend mean 29.75 vs extracted 29.69
+saved forecasting/figures/F2_smoothing_decomposition.png
+
+==================== f3_arima_forecast ====================
+Train 2022-05-08 -> 2024-11-10 (132 wk) | Test 2024-11-17 -> 2025-04-27 (24 wk)
+ADF on the seasonally adjusted TRAIN series -> d = 1 (p of the stationary version = 0.0000)
+ p  d  q     AIC
+ 1  1  2 1387.22
+ 2  1  2 1389.22
+ 0  1  1 1389.72
+ 1  1  1 1390.46
+ 0  1  2 1390.67
+ 2  1  1 1391.63
+ 2  1  0 1405.21
+ 1  1  0 1408.69
+Selected order (lowest AIC): (1, 1, 2)  AIC = 1387.22
+saved forecasting/figures/F3_acf_pacf.png
+                                         MAE    RMSE  MAPE_%  100-MAPE_%
+Seasonal-adjusted ARIMA(1, 1, 2)       80.19   94.66    4.50       95.50
+Plain ARIMA(1,1,1) on raw series      357.50  403.16   21.85       78.15
+Seasonal naive (same week last year)  140.90  157.88    7.86       92.14
+Naive (last observed value)           420.33  469.85   25.64       74.36
+            Forecast  Lower_95  Upper_95
+2025-05-04    1538.4    1468.6    1608.2
+2025-05-11    1574.5    1496.8    1652.2
+2025-05-18    1556.6    1477.2    1636.0
+2025-05-25    1574.9    1492.6    1657.2
+2025-06-01    1625.6    1538.7    1712.4
+2025-06-08    1625.9    1537.2    1714.6
+2025-06-15    1642.3    1550.9    1733.6
+2025-06-22    1711.4    1614.4    1808.4
+2025-06-29    1657.7    1562.0    1753.4
+2025-07-06    1709.6    1609.1    1810.0
+2025-07-13    1809.0    1700.9    1917.1
+2025-07-20    1857.6    1744.7    1970.5
+2025-07-27    1941.4    1821.6    2061.3
+2025-08-03    2000.4    1875.0    2125.8
+2025-08-10    2079.7    1947.3    2212.1
+2025-08-17    2082.6    1948.1    2217.1
+Final model order: (1, 1, 1)
+saved forecasting/figures/F4_forecast.png
+
+==================== f4_statistical_tests ====================
+Modal price: n=2733, mean=3248.5, var=5382407, skew=1.04, kurt=0.13
+Volatility rank (top 5): {'Cucumbar(Kheera)': 1.0, 'Pomegranate': 2.0, 'Pumpkin': 3.0, 'Ashgourd': 4.0, 'Water Melon': 5.0}
+Shapiro-Wilk, Tomato modal price                        stat=    0.7137  p=5.065e-16  -> Reject H0
+Shapiro-Wilk, Onion modal price                         stat=    0.7012  p=2.583e-16  -> Reject H0
+Shapiro-Wilk, Potato modal price                        stat=    0.7901  p=1.380e-13  -> Reject H0
+Shapiro-Wilk, Green Chilli modal price                  stat=    0.9308  p=4.317e-05  -> Reject H0
+Shapiro-Wilk, spread % (all records)                    stat=    0.7239  p=1.296e-53  -> Reject H0
+Levene, modal price across 8 states                     stat=   11.0645  p=7.974e-14  -> Reject H0
+One-way ANOVA, modal price across 8 states              stat=   45.7284  p=6.162e-61  -> Reject H0
+Kruskal-Wallis, modal price across 8 states             stat=  443.1947  p=1.284e-91  -> Reject H0
+Levene, Tomato Kerala vs UP                             stat=   41.8908  p=2.956e-08  -> Reject H0
+Independent t-test, Tomato Kerala vs UP                 stat=    9.0702  p=9.293e-09  -> Reject H0
+Mann-Whitney U, Tomato Kerala vs UP                     stat=  714.5000  p=1.391e-09  -> Reject H0
+Two-sample KS, Tomato Kerala vs UP                      stat=    0.9444  p=6.746e-13  -> Reject H0
+One-sample t-test, Tomato spread % vs 20                stat=    0.8015  p=4.240e-01  -> Fail to reject H0
+One-sample t-test, Onion spread % vs 20                 stat=    0.9507  p=3.433e-01  -> Fail to reject H0
+One-sample t-test, Potato spread % vs 20                stat=    0.2026  p=8.397e-01  -> Fail to reject H0
+Wilcoxon signed-rank, Tomato spread % vs 20             stat= 5119.5000  p=4.510e-01  -> Fail to reject H0
+Paired t-test, Tomato vs Potato (n=120 markets)         stat=   -1.2187  p=2.254e-01  -> Fail to reject H0
+Wilcoxon signed-rank, Tomato vs Potato                  stat= 1924.5000  p=6.039e-03  -> Reject H0
+Chi-square, State vs High-volatility flag               stat=  217.0911  p=2.734e-43  -> Reject H0
+Pearson, modal price vs spread %                        stat=   -0.1054  p=3.378e-08  -> Reject H0
+Spearman, modal price vs spread %                       stat=   -0.2095  p=1.716e-28  -> Reject H0
+
+High-volatility share by state (%):
+ State
+Gujarat             57.0
+Haryana             42.7
+Himachal Pradesh    19.9
+Kerala              27.3
+Odisha              42.7
+Punjab              46.9
+Rajasthan           48.0
+Uttar Pradesh       13.2
+Kerala/UP tomato ratio 2.90
+saved forecasting/figures/F5_statistical_tests.png
+
+==================== f5_future_implications ====================
+            Price_now  Forecast_4w  Actual_4w      Alert  Dir_correct  Gain_if_follow
+Week                                                                                 
+2024-11-10     2174.0       1966.0     2001.0   SELL NOW         True           173.0
+2024-11-17     2267.0       1926.0     2022.0   SELL NOW         True           244.0
+2024-11-24     2161.0       1884.0     1994.0   SELL NOW         True           167.0
+2024-12-01     2029.0       1835.0     2003.0   SELL NOW         True            26.0
+2024-12-08     2001.0       1801.0     2000.0   SELL NOW         True             1.0
+2024-12-15     2022.0       1769.0     1805.0   SELL NOW         True           218.0
+2024-12-22     1994.0       1708.0     1687.0   SELL NOW         True           307.0
+2024-12-29     2003.0       1718.0     1594.0   SELL NOW         True           409.0
+2025-01-05     2000.0       1726.0     1680.0   SELL NOW         True           320.0
+2025-01-12     1805.0       1680.0     1601.0   SELL NOW         True           204.0
+2025-01-19     1687.0       1630.0     1600.0  NO ACTION         True             NaN
+2025-01-26     1594.0       1526.0     1576.0  NO ACTION         True             NaN
+2025-02-02     1680.0       1543.0     1588.0   SELL NOW         True            93.0
+2025-02-09     1601.0       1525.0     1639.0  NO ACTION        False             NaN
+2025-02-16     1600.0       1530.0     1592.0  NO ACTION         True             NaN
+2025-02-23     1576.0       1587.0     1575.0  NO ACTION        False             NaN
+2025-03-02     1588.0       1547.0     1534.0  NO ACTION         True             NaN
+2025-03-09     1639.0       1594.0     1506.0  NO ACTION         True             NaN
+2025-03-16     1592.0       1619.0     1563.0  NO ACTION        False             NaN
+2025-03-23     1575.0       1574.0     1586.0  NO ACTION        False             NaN
+{'backtest_origins': 20, 'direction_hit_rate_pct': np.float64(80.0), 'mape_4w_pct': np.float64(3.97), 'alerts_issued': 11, 'alert_success_pct': np.float64(100.0), 'avg_gain_per_alert_inr_q': np.float64(196.46)}
+                  Records  Mean_Spread_Pct  Mean_Spread_INR  Pct_Records_Over_20
+Commodity                                                                       
+Cucumbar(Kheera)       98             29.1            442.3                 52.0
+Pomegranate            18             25.7           1941.7                 50.0
+Pumpkin                80             25.1            324.8                 47.5
+Ashgourd               22             24.7            468.2                 45.5
+Water Melon            48             23.8            252.5                 50.0
+Cabbage                69             22.9            333.3                 36.2
+Bottle gourd           83             22.7            265.1                 41.0
+Mango                  48             22.4           1092.7                 37.5
+Brinjal               115             22.0            428.3                 41.7
+Onion                 154             21.7            330.0                 37.7
+   Commodity  Kerala_mean  UP_mean  Ratio  Gap_INR_q  n_Kerala  n_UP  MannWhitney_p
+      Tomato     2530.000  872.500  2.900   1657.500        20    36            0.0
+       Onion     2996.296 1364.730  2.196   1631.567        27    37            0.0
+      Potato     3357.895 1088.023  3.086   2269.871        19    43            0.0
+     Brinjal     3000.000 1163.091  2.579   1836.909        20    22            0.0
+Green Chilli     4127.778 2077.609  1.987   2050.169        18    23            0.0
+saved forecasting/figures/F6_future_implications.png

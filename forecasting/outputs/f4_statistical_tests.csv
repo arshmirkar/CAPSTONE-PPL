@@ -1,0 +1,22 @@
+Test,H0,H1,Statistic,p_value,Decision(alpha=0.05),Note
+"Shapiro-Wilk, Tomato modal price",Prices are normally distributed,Prices are not normal,0.7137,5.065e-16,Reject H0,
+"Shapiro-Wilk, Onion modal price",Prices are normally distributed,Prices are not normal,0.7012,2.583e-16,Reject H0,
+"Shapiro-Wilk, Potato modal price",Prices are normally distributed,Prices are not normal,0.7901,1.38e-13,Reject H0,
+"Shapiro-Wilk, Green Chilli modal price",Prices are normally distributed,Prices are not normal,0.9308,4.317e-05,Reject H0,
+"Shapiro-Wilk, spread % (all records)",Spread % is normal,Spread % is not normal,0.7239,1.296e-53,Reject H0,
+"Levene, modal price across 8 states",Equal variances,At least one differs,11.0645,7.974e-14,Reject H0,
+"One-way ANOVA, modal price across 8 states",Equal mean price,At least one state differs,45.7284,6.162e-61,Reject H0,
+"Kruskal-Wallis, modal price across 8 states",Equal distributions/medians,At least one differs,443.1947,1.284e-91,Reject H0,non-parametric confirmation (prices are right-skewed)
+"Levene, Tomato Kerala vs UP",Equal variance,Unequal variance,41.8908,2.956e-08,Reject H0,
+"Independent t-test, Tomato Kerala vs UP",Equal mean price,Mean prices differ,9.0702,9.293e-09,Reject H0,Welch version used if Levene rejects
+"Mann-Whitney U, Tomato Kerala vs UP",Same distribution,Kerala prices stochastically different,714.5,1.391e-09,Reject H0,
+"Two-sample KS, Tomato Kerala vs UP",Same distribution,Distributions differ,0.9444,6.746e-13,Reject H0,
+"One-sample t-test, Tomato spread % vs 20",Mean spread = 20 %,Mean spread != 20 %,0.8015,0.424,Fail to reject H0,sample mean 21.1 %
+"One-sample t-test, Onion spread % vs 20",Mean spread = 20 %,Mean spread != 20 %,0.9507,0.3433,Fail to reject H0,sample mean 21.7 %
+"One-sample t-test, Potato spread % vs 20",Mean spread = 20 %,Mean spread != 20 %,0.2026,0.8397,Fail to reject H0,sample mean 20.4 %
+"Wilcoxon signed-rank, Tomato spread % vs 20",Median spread = 20 %,Median != 20 %,5119.5,0.451,Fail to reject H0,non-parametric counterpart
+"Paired t-test, Tomato vs Potato (n=120 markets)",Mean difference = 0,Mean difference != 0,-1.2187,0.2254,Fail to reject H0,
+"Wilcoxon signed-rank, Tomato vs Potato",Median difference = 0,Median difference != 0,1924.5,0.006039,Reject H0,
+"Chi-square, State vs High-volatility flag",Volatility class independent of State,Dependent,217.0911,2.734e-43,Reject H0,Cramer's V = 0.31
+"Pearson, modal price vs spread %",r = 0,r != 0,-0.1054,3.378e-08,Reject H0,
+"Spearman, modal price vs spread %",rho = 0,rho != 0,-0.2095,1.716e-28,Reject H0,same sign as Pearson
